@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الأرشيف</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #fffaf0;
+            text-align: center;
+            padding: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: #fff5e6;
+        }
+        th, td {
+            border: 1px solid #ffa07a;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #ffcc99;
+        }
+        button {
+            background-color: #ff704d;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+    </style>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+        import { getDatabase, ref, onValue, remove, push, set } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAB4wO937rCwc0OTWeJlGgoaxErWOdjaJM",
+            authDomain: "my-new-a6e9f.firebaseapp.com",
+            databaseURL: "https://my-new-a6e9f-default-rtdb.firebaseio.com/",
+            projectId: "my-new-a6e9f",
+            storageBucket: "my-new-a6e9f.appspot.com",
+            messagingSenderId: "1034729064842",
+            appId: "1:1034729064842:web:5b3d42fe7b5c0f3a3ae073"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const archiveRef = ref(db, "archive");
+
+        window.addEntry = function() {
+            const aviso = document.getElementById("aviso").value;
+            const link = document.getElementById("link").value;
+            const notes = document.getElementById("notes").value;
+            if (aviso && link && notes) {
+                const newEntryRef = push(archiveRef);
+                set(newEntryRef, { aviso, link, notes });
+                document.getElementById("aviso").value = "";
+                document.getElementById("link").value = "";
+                document.getElementById("notes").value = "";
+            }
+        };
+
+        window.deleteEntry = function(key) {
+            remove(ref(db, `archive/${key}`));
+        };
+
+        onValue(archiveRef, (snapshot) => {
+            let table = document.getElementById("archiveTable");
+            table.innerHTML = "";
+            let colorIndex = 0;
+            let colors = ["#ffebcc", "#ffd699"];
+            
+            snapshot.forEach((childSnapshot) => {
+                let entry = childSnapshot.val();
+                let row = table.insertRow();
+                row.style.backgroundColor = colors[colorIndex % colors.length];
+                
+                row.insertCell(0).textContent = entry.aviso;
+                row.insertCell(1).textContent = entry.link;
+                row.insertCell(2).textContent = entry.notes;
+                let deleteCell = row.insertCell(3);
+                let deleteButton = document.createElement("button");
+                deleteButton.textContent = "حذف";
+                deleteButton.onclick = () => deleteEntry(childSnapshot.key);
+                deleteCell.appendChild(deleteButton);
+                
+                colorIndex++;
+            });
+        });
+    </script>
+</head>
+<body>
+    <h2>صفحة الأرشيف</h2>
+    <input type="text" id="aviso" placeholder="Aviso">
+    <input type="text" id="link" placeholder="Link">
+    <input type="text" id="notes" placeholder="Notes">
+    <button onclick="addEntry()">إضافة</button>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Aviso</th>
+                <th>Link</th>
+                <th>Notes</th>
+                <th>إجراء</th>
+            </tr>
+        </thead>
+        <tbody id="archiveTable"></tbody>
+    </table>
+</body>
+</html>
